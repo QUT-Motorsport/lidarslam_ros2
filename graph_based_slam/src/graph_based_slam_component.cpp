@@ -210,7 +210,8 @@ void GraphBasedSlamComponent::searchLoop()
   if (is_candidate) {
     pcl::PointCloud<pcl::PointXYZI>::Ptr submap_clouds_ptr(new pcl::PointCloud<pcl::PointXYZI>);
     for (int j = 0; j <= 2 * search_submap_num_; ++j) {
-      if (id_min + j - search_submap_num_ < 0) {continue;}
+      if (id_min + j - search_submap_num_ <= 0) {continue;}
+      if (id_min + j - search_submap_num_ >= num_submaps) {break;}
       auto near_submap = map_array_msg.submaps[id_min + j - search_submap_num_];
       pcl::PointCloud<pcl::PointXYZI>::Ptr submap_cloud_ptr(new pcl::PointCloud<pcl::PointXYZI>);
       pcl::fromROSMsg(near_submap.cloud, *submap_cloud_ptr);
@@ -319,7 +320,7 @@ void GraphBasedSlamComponent::doPoseAdjustment(
 
   optimizer.initializeOptimization();
   optimizer.optimize(10);
-  optimizer.save("pose_graph.g2o");
+  // optimizer.save("pose_graph.g2o");
 
   /* modified_map publish */
   std::cout << "modified_map publish" << std::endl;
