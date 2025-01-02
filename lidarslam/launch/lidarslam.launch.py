@@ -1,62 +1,72 @@
 import os
 
-import launch
-import launch_ros.actions
+from launch import LaunchDescription
+from launch_ros.actions import Node
 
 from ament_index_python.packages import get_package_share_directory
 
 def generate_launch_description():
 
-    main_param_dir = launch.substitutions.LaunchConfiguration(
-        'main_param_dir',
-        default=os.path.join(
-            get_package_share_directory('lidarslam'),
-            'param',
-            'lidarslam.yaml'))
-    
-    rviz_param_dir = launch.substitutions.LaunchConfiguration(
-        'rviz_param_dir',
-        default=os.path.join(
-            get_package_share_directory('lidarslam'),
-            'rviz',
-            'mapping.rviz'))
+    lidarslam_params = os.path.join(get_package_share_directory('lidarslam'), 'param', 'lidarslam.yaml')
 
-    mapping = launch_ros.actions.Node(
-        package='scanmatcher',
-        executable='scanmatcher_node',
-        parameters=[main_param_dir],
-        remappings=[('/input_cloud','/velodyne_points')],
+    lidarslam = Node(
+        package='lidarslam',
+        executable='lidarslam',
+        parameters=[lidarslam_params],
+        remappings=[
+            ('input_cloud','/lidar/objects'),
+            # ('input_cloud','velodyne_points'),
+            ('current_pose','slam/pose'),
+            ('map','slam/map'),
+            ('path','slam/path_tracked'),
+            ('map_array','slam/map_array'),
+            ('modified_map','slam/modified_map'),
+            ('modified_map_array','slam/modified_map_array'),
+            ('modified_path','slam/modified_path'),
+        ],
         output='screen'
-        )
+    )
 
-    tf = launch_ros.actions.Node(
-        package='tf2_ros',
-        executable='static_transform_publisher',
-        arguments=['0','0','0','0','0','0','1','base_link','velodyne']
-        )
+    # slam_container = ComposableNodeContainer(
+    #     name="slam_container",
+    #     namespace="",
+    #     package="rclcpp_components",
+    #     executable="component_container",
+    #     composable_node_descriptions=[
+    #         # composed node for faster msg transfer
+    #         ComposableNode(
+    #             package='scanmatcher',
+    #             name='scan_matcher',
+    #             plugin='graphslam::ScanMatcherComponent',
+    #             parameters=[lidarslam_params],
+    #             remappings=[
+    #                 ('input_cloud','velodyne_points'),
+    #                 ('current_pose','slam/pose'),
+    #                 ('map','slam/map'),
+    #                 ('map_array','slam/map_array'),
+    #                 ('path','slam/path_tracked'),
+    #             ],
+    #             extra_arguments=[{"use_intra_process_comms": True}],
+    #         ),
+    #         ComposableNode(
+    #             package='graph_based_slam',
+    #             name='graph_based_slam',
+    #             plugin='graphslam::GraphBasedSlamComponent',
+    #             parameters=[lidarslam_params],
+    #             remappings=[
+    #                 ('map_array','slam/map_array'),
+    #                 ('modified_map','slam/modified_map'),
+    #                 ('modified_map_array','slam/modified_map_array'),
+    #                 ('modified_path','slam/modified_path'),
+    #             ],
+    #             extra_arguments=[{"use_intra_process_comms": True}],
+    #         ),
+    #     ],
+    #     output="both",
+    # )
 
-
-    graphbasedslam = launch_ros.actions.Node(
-        package='graph_based_slam',
-        executable='graph_based_slam_node',
-        parameters=[main_param_dir],
-        output='screen'
-        )
-    
-    rviz = launch_ros.actions.Node(
-        package='rviz2',
-        executable='rviz2',
-        arguments=['-d', rviz_param_dir]
-        )
-
-
-    return launch.LaunchDescription([
-        launch.actions.DeclareLaunchArgument(
-            'main_param_dir',
-            default_value=main_param_dir,
-            description='Full path to main parameter file to load'),
-        mapping,
-        tf,
-        graphbasedslam,
-        rviz,
-            ])
+    return LaunchDescription(
+        [
+            lidarslam
+        ]
+    )
