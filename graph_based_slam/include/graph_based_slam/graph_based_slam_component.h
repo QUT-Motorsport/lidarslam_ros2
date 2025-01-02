@@ -103,6 +103,8 @@ private:
     tf2_ros::TransformListener listener_;
     tf2_ros::TransformBroadcaster broadcaster_;
 
+    std::string global_frame_id_;
+
     boost::shared_ptr<pcl::Registration < pcl::PointXYZI, pcl::PointXYZI >> registration_;
     pcl::VoxelGrid < pcl::PointXYZI > voxelgrid_;
 

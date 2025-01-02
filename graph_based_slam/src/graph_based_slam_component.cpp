@@ -18,6 +18,8 @@ GraphBasedSlamComponent::GraphBasedSlamComponent(const rclcpp::NodeOptions & opt
   double ndt_resolution;
   int ndt_num_threads;
 
+  declare_parameter("global_frame_id", "map");
+  get_parameter("global_frame_id", global_frame_id_);
   declare_parameter("registration_method", "NDT");
   get_parameter("registration_method", registration_method);
   declare_parameter("voxel_leaf_size", 0.2);
@@ -179,6 +181,7 @@ void GraphBasedSlamComponent::searchLoop()
     *latest_submap_cloud_ptr, *transformed_latest_submap_cloud_ptr,
     latest_affine.matrix().cast<float>());
   registration_->setInputSource(transformed_latest_submap_cloud_ptr);
+
   double latest_moving_distance = latest_submap.distance;
   Eigen::Vector3d latest_submap_pos{
     latest_submap.pose.position.x,
@@ -323,7 +326,7 @@ void GraphBasedSlamComponent::doPoseAdjustment(
   lidarslam_msgs::msg::MapArray modified_map_array_msg;
   modified_map_array_msg.header = map_array_msg.header;
   nav_msgs::msg::Path path;
-  path.header.frame_id = "map";
+  path.header.frame_id = global_frame_id_;
   pcl::PointCloud<pcl::PointXYZI>::Ptr map_ptr(new pcl::PointCloud<pcl::PointXYZI>());
   for (int i = 0; i < submaps_size; i++) {
     g2o::VertexSE3 * vertex_se3 = static_cast<g2o::VertexSE3 *>(optimizer.vertex(i));
@@ -354,6 +357,7 @@ void GraphBasedSlamComponent::doPoseAdjustment(
     /* path */
     geometry_msgs::msg::PoseStamped pose_stamped;
     pose_stamped.header = submap.header;
+    pose_stamped.header.frame_id = global_frame_id_;
     pose_stamped.pose = submap.pose;
     path.poses.push_back(pose_stamped);
 
@@ -364,7 +368,7 @@ void GraphBasedSlamComponent::doPoseAdjustment(
 
   sensor_msgs::msg::PointCloud2::SharedPtr map_msg_ptr(new sensor_msgs::msg::PointCloud2);
   pcl::toROSMsg(*map_ptr, *map_msg_ptr);
-  map_msg_ptr->header.frame_id = "map";
+  map_msg_ptr->header.frame_id = global_frame_id_;
   modified_map_pub_->publish(*map_msg_ptr);
   if (do_save_map) {pcl::io::savePCDFileASCII("map.pcd", *map_ptr);} // too heavy
 
