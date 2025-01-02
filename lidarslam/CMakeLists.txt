@@ -88,7 +88,7 @@ ament_target_dependencies(lidarslam
   )
 
 install(
-  DIRECTORY launch param rviz
+  DIRECTORY launch param
   DESTINATION share/${PROJECT_NAME}
 )
 

@@ -109,11 +109,6 @@ install(
   DESTINATION include
 )
 
-install(
-  DIRECTORY launch param
-  DESTINATION share/${PROJECT_NAME}
-)
-
 install(TARGETS
   graph_based_slam_component
   ARCHIVE DESTINATION lib

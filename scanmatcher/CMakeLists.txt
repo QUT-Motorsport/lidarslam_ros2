@@ -98,11 +98,6 @@ install(
   DESTINATION include
 )
 
-install(
-  DIRECTORY launch param
-  DESTINATION share/${PROJECT_NAME}
-)
-
 install(TARGETS
   scanmatcher_component
   ARCHIVE DESTINATION lib
